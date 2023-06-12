@@ -138,3 +138,24 @@ class Font:
 
 class Texture(Surface):
 	...
+
+
+_draw = draw
+
+class draw:
+    circle = _draw.circle
+    rect = _draw.rect
+    polygon = _draw.polygon
+    line = _draw.line
+    def arrow(sc,cl,p1,p2,xl=10,
+              angle=45,vec=None):
+        draw.line(sc,cl,p1,p2)
+        if not vec:
+            vec = (Vector2(p2)-Vector2(p1)).\
+            normalize()
+
+        vec1 = vec.rotate(180-angle/2)
+        vec2 = vec.rotate(-180+angle/2)
+        px1 = Vector2(p2)+vec1*xl
+        px2 = Vector2(p2)+vec2*xl
+        draw.polygon(sc,cl,(p2,px1,px2),0)

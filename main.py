@@ -1,6 +1,9 @@
 ## importing 'gui' library
 
 from gui import *
+from effects import *
+from const import *
+from levels import *
 import gui
 
 
@@ -11,6 +14,7 @@ MIDDLE = Color(53, 53, 53)
 ACCENT = Color(106, 214, 218)
 MAIN = Color(255, 255, 255)
 SKETCH = Color(0, 0, 0)
+SYSIND = Color(255, 100, 100)
 
 # integers
 MARGIN = 8
@@ -23,6 +27,9 @@ title_font = gui.Font(gui.SYSTEM, 64, ("Console", "Droid Sans Mono", "Consolas",
 main_font = gui.Font(gui.SYSTEM,32, ("Console", "Droid Sans Mono", "Consolas", "Courier", "Monospace"))
 title_em = title_font.get_em()
 main_em = main_font.get_em()
+
+## level manager
+lvlmgr = LevelManager()
 
 
 ## script. has no code effect.
@@ -56,6 +63,8 @@ window.set_title("")
 window.set_icon(gui.image.load("images/icon.png"))
 window.show()
 
+## init sth needs window already initialized
+main_menu_arrows = ArrowsEffect(window.sc, Color(list(i//2 for i in MAIN[:3])), MAIN_MENU_ARROWS_AMOUNT)
 
 # important textures setup
 author_logo = onigiri_logo = gui.smoothscale(gui.image.load("images/slowman.png"), (128, 128))
@@ -70,6 +79,25 @@ menu_texture.blit(main_font.render("Настройки",MAIN), gui._calc_pos(men
 menu_texture.blit(main_font.render("О авторе",MAIN), gui._calc_pos(menu_texture,main_font.render("О авторе",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct"))
 menu_texture.blit(main_font.render("Выход",MAIN), gui._calc_pos(menu_texture,main_font.render("Выход",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct"))
 
+# hitboxes
+main_menu_rect_pos = Vec2(*gui._calc_pos(window.sc, menu_texture, Vec2(0,MARGIN*4+title_em), "ct"))
+
+main_menu_play_pos = gui._calc_pos(menu_texture,main_font.render("Играть",MAIN),Vec2(0,MARGIN*2),"ct")
+main_menu_play_pos += main_menu_rect_pos
+main_menu_play_rect = Rect(*main_menu_play_pos, *main_font.render("Играть",MAIN).get_size())
+
+main_menu_settings_pos = gui._calc_pos(menu_texture,main_font.render("Настройки",MAIN),Vec2(0,MARGIN*4+main_em),"ct")
+main_menu_settings_pos += main_menu_rect_pos
+main_menu_settings_rect = Rect(*main_menu_settings_pos, *main_font.render("Настройки",MAIN).get_size())
+
+main_menu_about_pos = gui._calc_pos(menu_texture,main_font.render("О авторе",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct")
+main_menu_about_pos += main_menu_rect_pos
+main_menu_about_rect = Rect(*main_menu_about_pos, *main_font.render("О авторе",MAIN).get_size())
+
+main_menu_exit_pos = gui._calc_pos(menu_texture,main_font.render("Выход",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct")
+main_menu_exit_pos += main_menu_rect_pos
+main_menu_exit_rect = Rect(*main_menu_exit_pos, *main_font.render("Выход",MAIN).get_size())
+
 
 ## mainloop
 while window.is_running():
@@ -79,11 +107,33 @@ while window.is_running():
 		if event.type == gui.QUIT:
 			window.close()
 
+		# mouse button release
+		if event.type == gui.MOUSEBUTTONUP:
+			if main_menu_play_rect.collidepoint(event.pos):
+				screen = "levels"
+				subscreen = "list"
+				timer = 0
+				counter = 0
+				moment = 0
+				lvlmgr.load()
+			if main_menu_settings_rect.collidepoint(event.pos):
+				screen = "settings"
+				subscreen = "list"
+				timer = 0
+				counter = 0
+				moment = 0
+			if main_menu_about_rect.collidepoint(event.pos):
+				screen = "about"
+				subscreen = "list"
+				timer = 0
+				counter = 0
+				moment = 0
+			if main_menu_exit_rect.collidepoint(event.pos):
+				window.close()
 
 	## draw process
 	# background
 	window.fill(BACK)
-
 
 	## screens
 	if screen == "splash":
@@ -95,27 +145,27 @@ while window.is_running():
 		# onigiri-in -> show slowman with distortion 1.0
 		if subscreen == "logo-in":
 			# distortion in
-			if timer < 255:
+			if timer < 255*SPLASH_EFFECT_DURATION:
 				author_logo.set_alpha(int(timer))
-				timer += window.delta()*255
+				timer += window.delta()*255/SPLASH_EFFECT_DURATION
 			else:
 				subscreen = "logo-on"
 				timer = 0
 
 		# just delay
 		if subscreen == "logo-on":
-			if timer < 1:
+			if timer < 1*SPLASH_EFFECT_DURATION:
 				timer += window.delta()
 			else:
 				subscreen = "logo-out"
-				timer = 255
+				timer = 255*SPLASH_EFFECT_DURATION
 
 		# hiding logo
 		if subscreen == "logo-out":
 			# distortion out
 			if timer > 0:
 				author_logo.set_alpha(int(timer))
-				timer -= window.delta()*255
+				timer -= window.delta()*255/SPLASH_EFFECT_DURATION
 			else:
 				# next logo?
 				if counter == 0:
@@ -132,9 +182,23 @@ while window.is_running():
 					timer = 0
 		if subscreen.startswith("logo"):
 			window.show(author_logo, align="cc")
+
+	if screen == "levels":
+		if subscreen == "list":
+			...
+
 	if screen == "main-menu":
+		## update part
+		main_menu_arrows.update(window.delta())
+		## draw part
+		main_menu_arrows.draw()
 		window.show(title_texture, align="ct", offset=Vec2(0,MARGIN))
 		window.show(menu_texture, align="ct", offset=Vec2(0,MARGIN*4+title_em))
+		# gui.draw.rect(window.sc, SYSIND, main_menu_play_rect, 1)
+		# gui.draw.rect(window.sc, SYSIND, main_menu_settings_rect, 1)
+		# gui.draw.rect(window.sc, SYSIND, main_menu_about_rect, 1)
+		# gui.draw.rect(window.sc, SYSIND, main_menu_exit_rect, 1)
+
 	window.apply()
 	window.tick(60)
 
