@@ -69,34 +69,34 @@ main_menu_arrows = ArrowsEffect(window.sc, Color(list(i//2 for i in MAIN[:3])), 
 # important textures setup
 author_logo = onigiri_logo = gui.smoothscale(gui.image.load("images/slowman.png"), (128, 128))
 talisman_logo = gui.smoothscale(gui.image.load("images/fastman.png"), (128, 128))
-title_texture = title_font.render("Электро-стрелки",ACCENT).convert_alpha()
+title_texture = title_font.render("Electro-arrows",ACCENT).convert_alpha()
 menu_texture = gui.Texture((window.width()/3,MARGIN*10+main_em*4)).convert()
 menu_texture.fill(BACK)
 gui.draw.rect(menu_texture,MIDDLE,(0,0,*menu_texture.get_size()),0,EDGE_RADIUS)
 gui.draw.rect(menu_texture,SKETCH,(0,0,*menu_texture.get_size()),1,EDGE_RADIUS)
-menu_texture.blit(main_font.render("Играть",MAIN), gui._calc_pos(menu_texture,main_font.render("Играть",MAIN),Vec2(0,MARGIN*2),"ct"))
-menu_texture.blit(main_font.render("Настройки",MAIN), gui._calc_pos(menu_texture,main_font.render("Настройки",MAIN),Vec2(0,MARGIN*4+main_em),"ct"))
-menu_texture.blit(main_font.render("О авторе",MAIN), gui._calc_pos(menu_texture,main_font.render("О авторе",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct"))
-menu_texture.blit(main_font.render("Выход",MAIN), gui._calc_pos(menu_texture,main_font.render("Выход",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct"))
+menu_texture.blit(main_font.render("Play",MAIN), gui._calc_pos(menu_texture,main_font.render("Play",MAIN),Vec2(0,MARGIN*2),"ct"))
+menu_texture.blit(main_font.render("Settings",MAIN), gui._calc_pos(menu_texture,main_font.render("Settings",MAIN),Vec2(0,MARGIN*4+main_em),"ct"))
+menu_texture.blit(main_font.render("About author",MAIN), gui._calc_pos(menu_texture,main_font.render("About the author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct"))
+menu_texture.blit(main_font.render("Quit",MAIN), gui._calc_pos(menu_texture,main_font.render("Quit",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct"))
 
 # hitboxes
 main_menu_rect_pos = Vec2(*gui._calc_pos(window.sc, menu_texture, Vec2(0,MARGIN*4+title_em), "ct"))
 
-main_menu_play_pos = gui._calc_pos(menu_texture,main_font.render("Играть",MAIN),Vec2(0,MARGIN*2),"ct")
+main_menu_play_pos = gui._calc_pos(menu_texture,main_font.render("Play",MAIN),Vec2(0,MARGIN*2),"ct")
 main_menu_play_pos += main_menu_rect_pos
-main_menu_play_rect = Rect(*main_menu_play_pos, *main_font.render("Играть",MAIN).get_size())
+main_menu_play_rect = Rect(*main_menu_play_pos, *main_font.render("Play",MAIN).get_size())
 
-main_menu_settings_pos = gui._calc_pos(menu_texture,main_font.render("Настройки",MAIN),Vec2(0,MARGIN*4+main_em),"ct")
+main_menu_settings_pos = gui._calc_pos(menu_texture,main_font.render("Settings",MAIN),Vec2(0,MARGIN*4+main_em),"ct")
 main_menu_settings_pos += main_menu_rect_pos
-main_menu_settings_rect = Rect(*main_menu_settings_pos, *main_font.render("Настройки",MAIN).get_size())
+main_menu_settings_rect = Rect(*main_menu_settings_pos, *main_font.render("Settings",MAIN).get_size())
 
-main_menu_about_pos = gui._calc_pos(menu_texture,main_font.render("О авторе",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct")
+main_menu_about_pos = gui._calc_pos(menu_texture,main_font.render("About the author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct")
 main_menu_about_pos += main_menu_rect_pos
-main_menu_about_rect = Rect(*main_menu_about_pos, *main_font.render("О авторе",MAIN).get_size())
+main_menu_about_rect = Rect(*main_menu_about_pos, *main_font.render("About the author",MAIN).get_size())
 
-main_menu_exit_pos = gui._calc_pos(menu_texture,main_font.render("Выход",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct")
+main_menu_exit_pos = gui._calc_pos(menu_texture,main_font.render("Quit",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct")
 main_menu_exit_pos += main_menu_rect_pos
-main_menu_exit_rect = Rect(*main_menu_exit_pos, *main_font.render("Выход",MAIN).get_size())
+main_menu_exit_rect = Rect(*main_menu_exit_pos, *main_font.render("Quit",MAIN).get_size())
 
 
 ## mainloop
