@@ -76,7 +76,7 @@ gui.draw.rect(menu_texture,MIDDLE,(0,0,*menu_texture.get_size()),0,EDGE_RADIUS)
 gui.draw.rect(menu_texture,SKETCH,(0,0,*menu_texture.get_size()),1,EDGE_RADIUS)
 menu_texture.blit(main_font.render("Play",MAIN), gui._calc_pos(menu_texture,main_font.render("Play",MAIN),Vec2(0,MARGIN*2),"ct"))
 menu_texture.blit(main_font.render("Settings",MAIN), gui._calc_pos(menu_texture,main_font.render("Settings",MAIN),Vec2(0,MARGIN*4+main_em),"ct"))
-menu_texture.blit(main_font.render("About author",MAIN), gui._calc_pos(menu_texture,main_font.render("About the author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct"))
+menu_texture.blit(main_font.render("About author",MAIN), gui._calc_pos(menu_texture,main_font.render("About author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct"))
 menu_texture.blit(main_font.render("Quit",MAIN), gui._calc_pos(menu_texture,main_font.render("Quit",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct"))
 
 # hitboxes
@@ -90,9 +90,9 @@ main_menu_settings_pos = gui._calc_pos(menu_texture,main_font.render("Settings",
 main_menu_settings_pos += main_menu_rect_pos
 main_menu_settings_rect = Rect(*main_menu_settings_pos, *main_font.render("Settings",MAIN).get_size())
 
-main_menu_about_pos = gui._calc_pos(menu_texture,main_font.render("About the author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct")
+main_menu_about_pos = gui._calc_pos(menu_texture,main_font.render("About author",MAIN),Vec2(0,MARGIN*6+main_em*2),"ct")
 main_menu_about_pos += main_menu_rect_pos
-main_menu_about_rect = Rect(*main_menu_about_pos, *main_font.render("About the author",MAIN).get_size())
+main_menu_about_rect = Rect(*main_menu_about_pos, *main_font.render("About author",MAIN).get_size())
 
 main_menu_exit_pos = gui._calc_pos(menu_texture,main_font.render("Quit",MAIN),Vec2(0,MARGIN*8+main_em*3),"ct")
 main_menu_exit_pos += main_menu_rect_pos
