@@ -184,7 +184,7 @@ class Level:
 			int32 x;
 			int32 y;
 			uint8 flags;
-			uint8 layers;
+			uint8 height;
 			char** layers[];
 		}
 		"""

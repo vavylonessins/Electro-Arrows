@@ -36,10 +36,16 @@ class ArrowsEffect:
 
 
 class LevelCard:
-	def __init__(self, sc, level, rect):
+	def __init__(self, sc, level, pos, size):
 		self.sc = sc
 		self.level = level
+		self.pos = Vector2(pos)
+		self.size = Vector2(size)
+		self.title_font = gui.Font(gui.SYSTEM, 42, ("Console", "Droid Sans Mono", "Consolas", "Courier", "Monospace"))
+		self.main_font = gui.Font(gui.SYSTEM,32, ("Console", "Droid Sans Mono", "Consolas", "Courier", "Monospace"))
 	
 	def draw(self):
-		gui.draw.rect(self.sc, TOP, self.rect, 0, MARGIN)
-		gui.draw.rect(self.sc, MAIN, self.rect, 1, MARGIN)
+		surf = Surface((int(self.size.x), int(self.size.y)), SRCALPHA)
+		gui.draw.rect(surf, TOP, (0, 0, *self.size), 0, MARGIN)
+		gui.draw.rect(surf, MAIN, (0, 0, *self.size), 1, MARGIN)
+
