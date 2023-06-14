@@ -1,4 +1,5 @@
 from gui import *
+from const import *
 import gui
 import random
 
@@ -32,3 +33,13 @@ class ArrowsEffect:
 				t = random.randint(1, 2)
 				d = -d
 			self.arrows[i] = [self.arrows[i][0], l, d, t]
+
+
+class LevelCard:
+	def __init__(self, sc, level, rect):
+		self.sc = sc
+		self.level = level
+	
+	def draw(self):
+		gui.draw.rect(self.sc, TOP, self.rect, 0, MARGIN)
+		gui.draw.rect(self.sc, MAIN, self.rect, 1, MARGIN)

@@ -1,24 +1,10 @@
-## importing 'gui' library
-
 from gui import *
 from effects import *
 from const import *
 from levels import *
+from rend import *
 import gui
 
-
-## constants
-# colors
-BACK = Color(43, 43, 43)
-MIDDLE = Color(53, 53, 53)
-ACCENT = Color(106, 214, 218)
-MAIN = Color(255, 255, 255)
-SKETCH = Color(0, 0, 0)
-SYSIND = Color(255, 100, 100)
-
-# integers
-MARGIN = 8
-EDGE_RADIUS = 8
 
 ## initialization
 gui.init()
@@ -28,28 +14,10 @@ main_font = gui.Font(gui.SYSTEM,32, ("Console", "Droid Sans Mono", "Consolas", "
 title_em = title_font.get_em()
 main_em = main_font.get_em()
 
+
 ## level manager
 lvlmgr = LevelManager()
 
-
-## script. has no code effect.
-script = {
-	"splash": {
-		"main-menu": {
-			"levels": {
-				"create-level": {
-					"game": {
-						"pause": {
-							"main-menu": {}
-						}
-					},
-				"import": {},
-				"export": {}
-				}
-			}
-		}
-	}
-}
 
 ## variables for frame changing
 screen = "splash"
@@ -58,10 +26,12 @@ moment = 0
 timer = 0
 counter = 0
 
+
 ## window setup
 window.set_title("")
 window.set_icon(gui.image.load("images/icon.png"))
 window.show()
+
 
 ## init sth needs window already initialized
 main_menu_arrows = ArrowsEffect(window.sc, Color(list(i//2 for i in MAIN[:3])), MAIN_MENU_ARROWS_AMOUNT)
@@ -101,7 +71,7 @@ main_menu_exit_rect = Rect(*main_menu_exit_pos, *main_font.render("Quit",MAIN).g
 
 ## mainloop
 while window.is_running():
-	## events
+	# events
 	for event in window.get_new_events():
 		# QUIT
 		if event.type == gui.QUIT:
@@ -185,7 +155,9 @@ while window.is_running():
 
 	if screen == "levels":
 		if subscreen == "list":
-			...
+			lvlmgr.load()
+			for n, path in enumerate(lvlmgr.levels):
+				level = Level(lvlmgr, path)
 
 	if screen == "main-menu":
 		## update part

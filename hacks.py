@@ -1,5 +1,5 @@
-class datatype:
-	def __init__(**k):
+class structure:
+	def __init__(self, **k):
 		self._dict = {**k, **self.__dict__}
 
 	def __getattribute__(self, k):
