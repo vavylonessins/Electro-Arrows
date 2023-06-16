@@ -1,40 +1,32 @@
-"""
-Привет, Стрелочник!
-Надеюсь, ты будешь поддерживать мой формат файлов.
-По факту, твоя задача просто сделать этот же код,
-только на своём языке. Это нужно для совместимости
-между разными фанатскими версиями стрелочек.
-
-Надеюсь на содействие.
-"""
+## Привет, Стрелочник!
+## Надеюсь, ты будешь поддерживать мой формат файлов.
+## По факту, твоя задача просто сделать этот же код,
+## только на своём языке. Это нужно для совместимости
+## между разными фанатскими версиями стрелочек.
+##
+## Надеюсь на содействие.
 
 
 from hacks import *
 from gui import *
-from datetime import datetime
+from const import *
+from funcs import *
+from thread import *
+import datetime
 import sys	
 import random
 import os
 import extui
 import pprint
+import time as pytime
 
-
-levels_json_template = """{
-	"content-type": "text/json",
-	"purpose": "Config file storing levels data",
-	"content": []
-}
-"""
-
-# это мне было лень вспоминать библиотеку uuid
-hex_letters: str = "0123456789ABCDEF"
 
 # Это чтобы можно было определить, для какой версии
 # предназначена карта.
 versions: tuple[str] = (
 	"«Стрелочки» - Онигири",
 	"«Электро-стрелки» - Талисман",
-	"«Стрелочки» - Кала Ма",
+	"«Стрелочки» - Kala ma",
 	"«Стрелочки» - Дикий Опездал",
 	"«Стрелка» - Zve1223",
 	"«Cunijaji» - Mr. Ybs"
@@ -42,304 +34,345 @@ versions: tuple[str] = (
 )
 
 
-# из байт в число
-def btoi(bytes: bytes, signed: bool = False) -> int:
-    result = int.from_bytes(bytes, 'little', signed=signed)
-    return result
+block___init__ = 0
+layer___init__ = 0
+chunk___init__ = 0
 
 
-# из числа в байты
-def itob(value: int, length: int, signed: bool = False) -> bytes:
-    result = value.to_bytes(length, 'little', signed=signed)
-    return result
+class Block:
 
+	def __init__(self, layer, raw):
 
-"""
-Эта ф-ия позволяет создать файл для карты. Тут все просто
-"""
-def create_level(name: str, path: str|os.PathLike,
-				 firstrun: bool = True, is_3d: bool = True,
-				 chunk_amount: int = 0, arrows_version: int = 1,
-				 chunks_binary: bytes = b'') -> None:
-	# name - str, any length
-	name: bytes = (name.strip()[:32]+(" "*(32-len(name[:32])))).encode('utf-8')+b'\x00'
+		global block___init__
+		block___init__ += 1
+		layer.chunk.level.blocks_amount += 1
 
-	# firstrun - bool, 1 byte
-	firstrun: bytes = itob(b'\x00\x01'[int(firstrun)], 1)
+		self.package = raw[0]
+		self.package_name = layer.chunk.level.mods[raw[0]]
+		self.type = raw[1]
+		self.state = btoi(raw[2:])
 
-	is_3d: bytes = b'\x00\x01'[int(is_3d)]
-
-	# creation date and time - str, any length
-	creation_datetime: bytes = str(datetime.now()).encode('utf-8')+b'\x00'
-
-	# convert integer to binary
-	chunk_amount: bytes = itob(chunk_amount, 8)
-
-	# version ID
-	print(arrows_version)
-	verid: bytes = itob(arrows_version, 1)
-	print(verid)
-
-	# chunks data - complex, dynamic sizeable
-	chunks: bytes = chunks_binary
-
-	# compiling all into binaryb'\x00\x01'[int(firstrun)]
-	#print(name,firstrun,creation_datetime,chunk_amount,verid,chunks)
-	raw: bytes = name+firstrun+creation_datetime+chunk_amount+verid+chunks
-
-	with open(path, "wb") as f:
-		f.write(raw)
-
-
-"""
-Эта ф-ия позволяет читать файл карты
-"""
-def read_level(path: str|os.PathLike) -> tuple:
-	with open(path, "rb") as f:
-		raw: bytes = f.read()
-
-	name: str = raw.split(b'\x00', 1)[0].decode('utf-8')
-	raw = raw.split(b'\x00', 1)[1]
-
-	firstrun: bool = bool(raw[0])
-	raw = raw[1:]
-
-	is_3d: bool = bool(raw[0])
-	raw = raw[1:]
-
-	creation_datetime: str = raw.split(b'\x00', 1)[0].decode('utf-8')
-	raw = raw.split(b'\x00',1)[1] # ERROR
-
-	chunk_amount: int = btoi(raw[:8])
-	raw = raw[8:]
-
-	print("VERID:",raw[0])
-	verid: str = versions[raw[0]]
-	raw = raw[1:]
-
-	chunks: bytes = raw
-	return name, firstrun, is_3d, creation_datetime, chunk_amount, verid, chunks
+		#print("Block.__init__(*) #"+str(block___init__))
+		#print("pkg:",self.package)
+		#print("type:",self.type)
+		#print("state:",self.state)
+		#print()
+	
+	def compile(self):
+		return itob(self.package, 1)+itob(self.type, 1)+itob(self.state, 2)
 
 
 class Layer:
-	def __init__(self, data: bytes):
-		self.rows: tuple[bytes] = tuple(data[::8])
+
+	def __init__(self, chunk, data: bytes):
+
+		global layer___init__
+		layer___init__ += 1
+		chunk.level.layers_amount += 1
+
+		self.chunk = chunk
+		self.blocks = []
+
+		tpool = InitThreadPool(Block)
+		tpool.exec(zip((self for i in range(64)), chunks(data, 64)))
+
+		self.blocks = list(tpool.rets).copy()
+
+		#print("\nLayer.__init__(*) #"+str(layer___init__))
+		#print("pkg:",pprint.pformat(self.data))
+		#print()
 	
 	def get_at(self, x: int, y: int):
-		return self.data[y][x]
+		return self.blocks[y*8+x]
+
+	def compile(self):
+
+		ret = b''
+
+		print("BLOCKS", self.blocks)
+		for b in self.blocks:
+			ret += b.compile()
+		
+		# print("AAA", repr(ret))
+		return ret
 
 
 class Chunk:
-	def __init__(self, x, y, flags: int, layers: int, content: bytes):
-		self.x: int = x
-		self.y: int = y
-		self.flags: int = flags
-		self.height: int = layers
-		self.layers: tuple[Layer] = (Layer(c) for c in content[::64])
+
+	def __init__(self, level, raw=False):
+
+		global chunk___init__
+		chunk___init__ += 1
+
+		self.level = level
+		self.raw = raw
+
+		self.x = 0
+		self.y = 0
+		self.flags = 0
+		self.height = 1
+
+		#print("\n\nChunk.__init__(*) #"+str(chunk___init__))
+		#print("pkg:",self.package)
+		#print("type:",self.type)
+		#print("state:",self.state)
+		#print()
 	
-	def get_at(self, x: int, y: int, z: int = 0):
+	def compile(self):
+
+		ret = b''
+
+		ret += itob(self.x, 8)
+		ret += itob(self.y, 8)
+		ret += itob(self.flags, 1)
+		ret += itob(self.height, 1)
+
+		#for l in self.layers:
+		#	ret += l.compile()
+		## Let's parallel!
+
+		tpool = SingleArgThreadPool(lambda layer: (print(layer), layer.compile()[1]))
+		tpool.exec(self.layers)
+
+		ret += b''.join(tuple(tpool.rets))
+		
+		return ret
+
+	
+	def generate(self):
+		# print("PANIC HERE", [b for b in chunks((b'\x00\x00\x00\x00'*64*self.height), 64*4)])
+		self.layers = [Layer(self, b) for b in chunks((b'\x00\x00\x00\x00'*64*self.height), 64*4)]
+
+	def init(self):
+
+		if not self.raw:
+			self.generate()
+			return
+
+		self.x = btoi(self.raw[:8])
+		self.raw = self.raw[8:]
+
+		self.y = btoi(self.raw[:8])
+		self.raw = self.raw[8:]
+
+		self.flags = btoi(self.raw[:1])
+		self.raw = self.raw[1:]
+
+		self.height = btoi(self.raw[:1])
+		self.raw = self.raw[1:]
+
+		self.layers = list(Layer(self, lay) for lay in chunks(self.raw, 256))
+	
+	def print_format(self):
+		text = "Chunk at {"+str(self.x)+"; "+str(self.y)+"}:\n"
+		for l in self.layers:
+			lines = chunks(l.compile(), 32)
+			text += "\n       "
+			for block in chunks(lines, 4):
+				text += " "+repr(block).upper()
+		text += '\n\n'
+		
+		print(text)
+	
+	def get_at(self, x, y, z=0):
 		return self.layers[z].get_at(x, y)
 
 
 class LevelManager:
+
 	def __init__(self):
 		pass
 
 	def load(self):
-		self.levels = os.listdir('./levels')
+
+		self.levels = list("./levels/"+p for p in os.listdir('./levels'))
 
 	def add(self, path: str|os.PathLike):
+
 		self.levels.append(path)
+	
+	def as_dict(self):
+
+		self.load()
+		ret = {}
+
+		for path in self.levels:
+
+			level = Level(self, path)
+			level.read()
+
+			ret[level.name] = level
+		
+		return ret
+	
+	def as_tuple(self):
+
+		self.load()
+		ret = ()
+
+		for path in self.levels:
+
+			level = Level(self, path)
+			level.read()
+
+			ret = ret + (level,)
+		
+		return ret
 
 
 class Level:
+
+	chunks: list[Chunk]
+
 	def __init__(self, lvlmgr: LevelManager, path: str|os.PathLike):
-		with open(path, "rb") as f:
+		
+		self.lvlmgr = lvlmgr
+		self.path = path
+
+		self.layers_amount = 0
+		self.blocks_amount = 0
+	
+	def init(self):
+
+		with open(self.path, "rb") as f:
 			self.raw = f.read()
-		self.lvlmgr: LevelManager = lvlmgr
-		self.path: str|os.PathLike = path
-		self.chunks: list[Chunk] = []
 
-	def parse(self):
-		self.name, self.new, self.is_3d, self.datetime, chunk_amount, self.version, self.raw = read_level(self.path)
+		self.read()
+		self.parse_chunks()
+	
+	def get_at(self, x, y, z=0):
 
-	def parse_bins(self):
-		raw = self.raw
+		cx = x // 8
+		rx = x - cx
+
+		cy = y // 8
+		ry = y - cy
+
+		return self.get_chunk(cx, cy).get_at(rx, ry, z)
+
+	def get_chunk(self, x, y):
+
+		tpool = ThreadPool(lambda x, y, c: c if c.x == x and c.y == y else None)
+		tpool.exec(self.chunks)
+
+		while None in tpool.rets:
+			tpool.rets.remove(None)
+		
+		if not tpool.rets:
+
+			self.init_chunk(x, y)
+			return self.chunks[-1]
+
+		return tpool.rets[0]
+
+	def init_chunk(self, x, y, z=1):
+
+		self.chunks.append(Chunk(self))
+
+		self.chunks[-1].x = x
+		self.chunks[-1].y = y
+		self.chunks[-1].height = z
+
+		self.chunks[-1].generate()
+	
+	def read(self):
+
+		with open(self.path, "rb") as f:
+			raw = f.read()
+		
+		assert btoi(raw[:8]) == 0x303153574f525241
+		raw = raw[8:]
+
+		self.name = raw.split(b'\x00')[0].decode()
+		raw = raw.split(b'\x00', 1)[1]
+
+		self.crdt = str(datetime.datetime.fromtimestamp(int.from_bytes(raw[:8], 'little')))
+		raw = raw[8:]
+
+		self.flags = raw[0]
+		raw = raw[1:]
+
+		self.ver_id = raw[0]
+		raw = raw[1:]
+
+		mods, raw = raw.split(b'\x00\x00', 1)
+		mods = mods.split(b'\x00')
+		self.mods = list(i.decode() for i in mods)
+
+		self.chunks = raw
+	
+	def print_format(self):
+
+		text = f"Level \"{self.name}\":\n"
+		text += f"    Creation time: {self.crdt}\n"
+		text += f"    3D Support: {'Yes' if self.flags & 1 else 'No'}\n"
+		text += f"    Game version of creator: {versions[self.ver_id]}\n"
+		text += f"    Chunks amount: {len(self.chunks)}\n"
+		text += f"    Layers amount: {self.layers_amount}\n"
+		text += f"    Blocks amount: {self.blocks_amount}\n"
+		text += f"\n    Installed mods:\n"
+
+		for m in self.mods:
+			text += "        "+m+"\n"
+
+		print(text)
+	
+	def write(self):
+
+		raw = itob(0x303153574f525241, 8)
+
+		raw += self.name.encode()+b'\x00'
+
+		raw += itob(int(pytime.mktime(datetime.datetime.now().timetuple())), 8)
+
+		raw += itob(int(self.flags), 1)
+		raw += itob(self.ver_id, 1)
+		
+		mods: bytes = b''
+
+		for m in self.mods:
+			mods += m.encode()+b'\x00'
+		
+		raw += mods+b'\x00'
+
+		raw += self.compile_chunks()
+
+		with open(self.path, "wb") as f:
+			f.write(raw)
+	
+	def compile_chunks(self):
+
+		ret = b''
+
+		for c in self.chunks:
+			ret += c.compile()
+		
+		return ret
+
+	def parse_chunks(self):
+
+
+		if not self.chunks:
+
+			self.chunks = []
+			return
+
+		raw = self.chunks
+
+		self.chunks = []
+
 		run = 1
 		ptr = 0
+
 		while run:
 			try:
-				chunk = self.parse_chunk(raw[ptr:])
-				size = 10 + chunk.heigh*64
-				chunk.content = raw[ptr+10:][:chunk.height*64]
+				if not raw[ptr:]:
+					break
+				chunk = Chunk(self, raw[ptr:])
+				chunk.init()
+				size = 10 + chunk.height*256
+				chunk.content = raw[ptr+10:][:chunk.height*256]
 				self.chunks.append(chunk)
 				ptr += size
 			except IndexError:
-				run = 0
-
-	def parse_chunk(self, raw):
-		""" формат чанков для электро стрелок '''
-
-		struct chunk_base {
-			int32 x;
-			int32 y;
-			uint8 flags;
-			uint8 height;
-			char** layers[];
-		}
-		"""
-		chunk = Chunk(
-			x = btoi(raw[:4]),
-			y = btoi(raw[4:][:4]),
-			flags = raw[8],
-			layers = raw[9],
-			content = b''
-		)
-
-		return chunk
-
-	def prepare_chunk(self, x, y, h):
-		chunk = Chunk(
-			x = x,
-			y = y,
-			flags = 0,
-			layers = h,
-			content = b'\x00'*64*h
-		)
-
-		self.chunks.append(chunk)
-
-	def delete_chunk(self, x, y):
-		n = -1
-		for c in self.chunks:
-			if c.x == x and c.y == y:
-				n = self.chunks.index(c)
 				break
-		if n == -1:
-			extui.popup(extui.POPUP_ERROR, "NOT FOUND", f"chunk at ({x}, {y})")
-		del self.chunks[n]
-
-	def save(self):
-		...
-
-
-###    ДАЛЬШЕ ТОЛЬКО ПРИМИТИВНЫЙ CLI РЕДАКТОР КАРТ, ТЕБЕ ОН НЕ ОЧЕНЬ ИНТЕРЕСЕН    ###
-
-if __name__ == "__main__":
-	lvlmgr = LevelManager()
-	lvlmgr.load()
-
-	def red_resp():
-		lvlmgr.load()
-		levels = lvlmgr.levels
-		for level in levels:
-			level = Level(lvlmgr, './levels/'+level)
-			level.parse()
-			print(f"* {level.name}")
-		name = input('name?> ')
-		path = "ERROR"
-		for level in levels:
-			level = Level(lvlmgr, './levels/'+level)
-			level.parse()
-			if level.name.strip() == name:
-				path = level.path
-				break
-		if path == "ERROR":
-			print("Not found.")
-			return
-		name, firstrun, is_3d, creation_datetime, chunk_amount, verid, chunks = read_level(path)
-		print(f"Name: {name}")
-		print(f"Firstrun: {firstrun}")
-		print(f"3D: {is_3d}")
-		print(f"Creation date and time: {creation_datetime}")
-		print(f"Arrows verrsion: {verid}")
-		print(f"Chunks amount: {chunk_amount}")
-		backslash_x = '\\x'
-		print(f"Chunks binary data: {repr(chunks).replace(backslash_x,'').upper()}")
-
-	def edi_resp():
-		lvlmgr.load()
-		levels = lvlmgr.levels
-		print("\n".join(("* "+level.name for level in levels)))
-		name = input('name?> ')
-		path = "ERROR"
-		for level in levels:
-			if level.name.strip() == name:
-				path = level.path
-				break
-		if path == "ERROR":
-			print("Not found.")
-			return
-		name, firstrun, creation_datetime, chunk_amount, verid, chunks = read_level(path)
-		print("""
-MENU:
-* exit - quit
-* prepare-chunk - prepares new chunk
-* delete-chunk - deletes chunk
-* apply-changes - applies changes
-""".strip)
-		
-		run = 1
-
-		while run:
-			if cmd == "exit":
-				break
-			if cmd == "prepare-chunk":
-				if level.new:
-					print("This is first chunk? so it automatically will be at (0;0)")
-					x = y = 0
-				else:
-					x = int(input("x?> "))
-					y = int(input("y?> "))
-				h = max(min(int(input("height?> ")), 4095), 1)
-				level.prepare_chunk(x, y, h)
-			if cmd == "delete-chunk":
-				x = int(input("x?> "))
-				y = int(input("y?> "))
-				level.delete_chunk(x, y)
-			if cmd == "apply-changes":
-				level.save()
-
-
-	def new_resp():
-		random_name = ""
-		for i in range(16):
-			random_name += random.choice(hex_letters)
-		name = input('name?> ')
-		firstrun = True
-		is_3d = input("3D?> ").strip().lower()[0] == "y"
-		verid = max(min(int(input("Version ID?> ")), 5), 0)
-		path = './levels/%s.arrows' % random_name
-		print()
-		print('Path:',path)
-		print('\nName:',name)
-		ok = input('Ok[Y/n/c]?> ')
-		if ok == 'c':
-			return
-		if ok == 'n':
-			print('Let\'s try again.')
-			new_resp()
-			return
-		create_level(name, path, firstrun, is_3d, 0, verid, b'')
-		lvlmgr.add(path)
-
-
-	run = 1
-	while run:
-		try:
-			cmd = input('> ')
-			if cmd == 'exit':
-				run = 0
-				continue
-			if cmd == 'new':
-				new_resp()
-			if cmd == 'red':
-				red_resp()
-			if cmd == 'edi':
-				edi_resp()
-		except EOFError:
-			print()
-			run = 0
-		except KeyboardInterrupt:
-			print()
-			run = 0
